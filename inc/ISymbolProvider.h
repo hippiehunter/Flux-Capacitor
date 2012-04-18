@@ -40,6 +40,7 @@ class ISymbolField
   virtual std::string ReadableValue(uint16_t address) = 0;
   virtual boost::weak_ptr<ISymbolStructure> Owner() = 0;
   virtual boost::shared_ptr<ISymbolStructure> Type() = 0;
+  virtual uint16_t OffsetFromParent() = 0;
 };
 
 class ISymbolGlobalField : public ISymbolField
@@ -49,6 +50,7 @@ class ISymbolGlobalField : public ISymbolField
   virtual std::string ReadableValue(uint16_t address) = 0;
   virtual boost::weak_ptr<ISymbolStructure> Owner() = 0;
   virtual boost::shared_ptr<ISymbolStructure> Type() = 0;
+  virtual uint16_t OffsetFromParent() = 0;
   virtual uint16_t Address() = 0;
 };
 
