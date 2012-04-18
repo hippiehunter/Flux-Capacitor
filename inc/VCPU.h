@@ -22,6 +22,7 @@ public:
   virtual uint16_t setRegister(IVCPU::VCPURegister reg, uint16_t value);
   virtual uint16_t getRegister(IVCPU::VCPURegister reg);
   virtual void run();
+  virtual void step();
   virtual void setBreak();
   virtual void addStepWatcher(std::function<void()> watcher);
   

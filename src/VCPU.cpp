@@ -39,7 +39,7 @@ void VCPU::run()
 {
   while(_isRunning)
   {
-    runStep();
+    step();
     for_each(_watchers.begin(), _watchers.end(), 
       [&](std::function<void()>& func) { func(); });
   }
@@ -55,7 +55,7 @@ void VCPU::addStepWatcher(std::function<void()> watcher)
   _watchers.push_back(watcher);
 }
 
-void VCPU::runStep()
+void VCPU::step()
 {
   uint16_t opCode = _memory->getAddress(postIncrementRegister(IVCPU::VCPURegister::PC));
   

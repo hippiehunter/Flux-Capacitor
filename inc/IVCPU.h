@@ -27,6 +27,7 @@ public:
   virtual uint16_t setRegister(VCPURegister reg, uint16_t value) = 0;
   virtual uint16_t getRegister(VCPURegister reg) = 0;
   virtual void run() = 0;
+  virtual void step() = 0;
   virtual void setBreak() = 0;
   virtual void addStepWatcher(std::function<void()> watcher) = 0;
 };
