@@ -14,14 +14,14 @@ using boost::property_tree::basic_ptree;
 
 namespace
 {
-class Reset : public IDebugCommand
+class Step : public IDebugCommand
 {
 private:
   shared_ptr<IVCPU> _vcpu;
   shared_ptr<IMemory> _memory;
   shared_ptr<ISymbolProvider> _symbolProvider;
 public:
-  Reset()
+  Step()
   {
     IDebugCommand::registerCommand(this);
   }
@@ -41,7 +41,7 @@ public:
   
   virtual basic_ptree<string, string> exec(basic_ptree<string, string>& commandPayload)
   {
-    _memory->reset();
+    _vcpu->step();
     
     basic_ptree<string, string> rslt;
     rslt.put<std::string>("result", "success");

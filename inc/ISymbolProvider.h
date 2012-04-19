@@ -7,12 +7,14 @@
 #include <boost/weak_ptr.hpp>
 #include <stdint.h>
 #include <tuple>
+#include <iostream>
 
 class ISymbolStructure;
 class ISymbolField;
 class ISymbolLabel;
 class ISymbolSourceLine;
 class ISymbolGlobalField;
+class ISymbolStackFrame;
 
 class ISymbolProvider
 {
@@ -25,16 +27,35 @@ public:
   virtual boost::shared_ptr<ISymbolLabel> ResolveLabel(uint16_t address) = 0;
   
   virtual boost::shared_ptr<ISymbolSourceLine> ResolveSourceLine(uint16_t address) = 0;
+  virtual boost::shared_ptr<ISymbolStackFrame> ResolveStackFrame(uint16_t address) = 0;
+protected:
+  virtual void LoadSymbols(std::istream& file);
+  
+  static void registerSymbolProvider(ISymbolProvider* symbolProvider, const std::string& name);
+  static ISymbolProvider* loadSymbols(const std::string& name, std::istream& file);
+};
+
+class ISymbolStackFrame
+{
+public:
+  virtual std::string Name() = 0;
+  virtual std::vector<boost::shared_ptr<ISymbolField>> Parameters() = 0;
+  virtual std::vector<boost::shared_ptr<ISymbolField>> Variables() = 0;
+  virtual boost::shared_ptr<ISymbolStackFrame> Parent() = 0;
+  virtual boost::shared_ptr<ISymbolSourceLine> CurrentLine() = 0;
 };
 
 class ISymbolStructure
 {
+public:
+  virtual std::string Name() = 0;
   virtual std::vector<boost::shared_ptr<ISymbolField>> AllFields() = 0;
   virtual boost::shared_ptr<ISymbolField> ResolveField(std::string& name) = 0;
 };
 
 class ISymbolField
 { 
+public:
   virtual const std::string& Name() = 0;
   virtual std::vector<uint16_t> Bytes(uint16_t address) = 0;
   virtual std::string ReadableValue(uint16_t address) = 0;
@@ -45,6 +66,7 @@ class ISymbolField
 
 class ISymbolGlobalField : public ISymbolField
 {
+public:
   virtual const std::string& Name() = 0;
   virtual std::vector<uint16_t> Bytes(uint16_t address) = 0;
   virtual std::string ReadableValue(uint16_t address) = 0;
@@ -56,12 +78,14 @@ class ISymbolGlobalField : public ISymbolField
 
 class ISymbolLabel
 {
+public:
   virtual uint16_t Address() = 0;
   virtual const std::string& Name() = 0;
 };
 
 class ISymbolSourceLine
 {
+public:
   virtual uint16_t Address() = 0;
   virtual const std::string& FileName() = 0;
   virtual std::tuple<uint32_t, uint32_t> FilePosition() = 0;

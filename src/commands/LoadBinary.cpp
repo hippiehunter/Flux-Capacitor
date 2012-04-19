@@ -16,6 +16,9 @@ using boost::property_tree::basic_ptree;
 using std::ifstream;
 using std::ios;
 
+
+namespace
+{
 class LoadBinary : public IDebugCommand
 {
 private:
@@ -61,3 +64,4 @@ public:
   }
   
 } instance;
+}
