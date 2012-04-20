@@ -29,7 +29,7 @@ public:
   
   virtual bool query_exec(std::string& command)
   {
-    if(command == "reset")
+    if(command == "run")
       return true;
   }
   

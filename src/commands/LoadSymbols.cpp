@@ -29,7 +29,7 @@ public:
   
   virtual bool query_exec(string& command)
   {
-    if(command == "reset")
+    if(command == "symbols")
       return true;
   }
   
