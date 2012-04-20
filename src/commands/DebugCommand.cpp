@@ -35,3 +35,11 @@ IDebugCommand* IDebugCommand::findCommand(std::string& name)
   else
     return options.front();
 }
+
+void IDebugCommand::initCommands(shared_ptr<IVCPU>& vcpu, shared_ptr<IMemory>& memory, shared_ptr<ISymbolProvider>& symbols)
+{
+  for(auto command : registeredCommands)
+  {
+    command->init(vcpu, memory, symbols);
+  }
+}

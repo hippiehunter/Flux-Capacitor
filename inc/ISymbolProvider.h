@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <tuple>
 #include <iostream>
+#include <functional>
 
 class ISymbolStructure;
 class ISymbolField;
@@ -28,11 +29,11 @@ public:
   
   virtual boost::shared_ptr<ISymbolSourceLine> ResolveSourceLine(uint16_t address) = 0;
   virtual boost::shared_ptr<ISymbolStackFrame> ResolveStackFrame(uint16_t address) = 0;
+  virtual void AddSymbols(std::istream& file) = 0;
+  static boost::shared_ptr<ISymbolProvider> loadSymbols(const std::string& name, std::istream& file);
 protected:
-  virtual void LoadSymbols(std::istream& file);
+  static void registerSymbolProvider(std::function<ISymbolProvider*(std::istream&)> symbolProvider, const std::string& name);
   
-  static void registerSymbolProvider(ISymbolProvider* symbolProvider, const std::string& name);
-  static ISymbolProvider* loadSymbols(const std::string& name, std::istream& file);
 };
 
 class ISymbolStackFrame

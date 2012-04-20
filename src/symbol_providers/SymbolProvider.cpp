@@ -6,22 +6,21 @@ using boost::shared_ptr;
 using std::string;
 using std::istream;
 using std::map;
+using std::function;
 
-static map<string, ISymbolProvider*> registeredSymbolProviders;
+static map<string, function<ISymbolProvider*(istream&)>> registeredSymbolProviders;
 
-void ISymbolProvider::registerSymbolProvider(ISymbolProvider* symbolProvider, const string& name)
+void ISymbolProvider::registerSymbolProvider(function<ISymbolProvider*(istream&)> symbolProvider, const string& name)
 {
   registeredSymbolProviders[name] = symbolProvider;
 }
 
-ISymbolProvider* ISymbolProvider::loadSymbols(const string& name, istream& file)
+shared_ptr<ISymbolProvider> ISymbolProvider::loadSymbols(const string& name, istream& file)
 {
   auto symbolProvider = registeredSymbolProviders.find(name);
   if(symbolProvider != registeredSymbolProviders.end())
-  {
-    symbolProvider->second->LoadSymbols(file);
-    return symbolProvider->second;
-  }
+    return shared_ptr<ISymbolProvider>(symbolProvider->second(file));
+  
   else
-    return nullptr;
+    return shared_ptr<ISymbolProvider>();
 }

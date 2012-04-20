@@ -1,15 +1,16 @@
 #include <boost/shared_ptr.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <string>
 
 #include "IDebugCommand.h"
 #include "IVCPU.h"
 #include "IMemory.h"
 #include "ISymbolProvider.h"
+#include "picojson.h"
 
 using std::string;
 using boost::shared_ptr;
-using boost::property_tree::basic_ptree;
+using picojson::value;
+using picojson::object;
 
 
 namespace
@@ -26,7 +27,7 @@ public:
     IDebugCommand::registerCommand(this);
   }
   
-  virtual bool query_exec(std::string& command)
+  virtual bool query_exec(string& command)
   {
     if(command == "reset")
       return true;
@@ -39,14 +40,11 @@ public:
     _symbolProvider = symbolProvider;
   }
   
-  virtual basic_ptree<string, string> exec(basic_ptree<string, string>& commandPayload)
+  virtual value exec(object& commandPayload)
   {
     _vcpu->step();
     
-    basic_ptree<string, string> rslt;
-    rslt.put<std::string>("result", "success");
-    
-    return rslt;
+    return value(object { {"result", value("success")} });
   }
   
 } instance;

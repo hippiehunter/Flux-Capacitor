@@ -15,19 +15,19 @@ using picojson::object;
 
 namespace
 {
-class Run : public IDebugCommand
+class LoadSymbols : public IDebugCommand
 {
 private:
   shared_ptr<IVCPU> _vcpu;
   shared_ptr<IMemory> _memory;
   shared_ptr<ISymbolProvider> _symbolProvider;
 public:
-  Run()
+  LoadSymbols()
   {
     IDebugCommand::registerCommand(this);
   }
   
-  virtual bool query_exec(std::string& command)
+  virtual bool query_exec(string& command)
   {
     if(command == "reset")
       return true;
@@ -42,9 +42,22 @@ public:
   
   virtual value exec(object& commandPayload)
   {
-    _vcpu->run();
-    
-    return value(object { {"result", value("success")} });
+    auto binaryFileName = commandPayload["targetFile"].get<string>();
+    ifstream file (binaryFileName, ios::in|ios::binary|ios::ate);
+    if(file.is_open())
+    {
+      auto symbolProvider = ISymbolProvider::loadSymbols(commandPayload["providerIdentifier"].get<string>());
+      IDebugCommand::initCommands(_vcpu, _memory, symbolProvider);
+      return value(object {{"result", value("success")}});
+    }
+    else
+    {
+      return value(object
+	{
+	  {"result", value("failure")},
+	  {"reason", value("file not found")}
+	});
+    }
   }
   
 } instance;

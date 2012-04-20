@@ -1,5 +1,4 @@
 #include <boost/shared_ptr.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
 #include <stdexcept>
@@ -9,11 +8,13 @@
 #include "IVCPU.h"
 #include "IMemory.h"
 #include "ISymbolProvider.h"
+#include "picojson.h"
 
 using std::string;
 using std::runtime_error;
 using boost::shared_ptr;
-using boost::property_tree::basic_ptree;
+using picojson::value;
+using picojson::object;
 using std::ifstream;
 using std::ios;
 using boost::lexical_cast;
@@ -46,7 +47,7 @@ public:
     _symbolProvider = symbolProvider;
   }
   
-  void insertStructureFields(uint16_t address, string baseName, string type, basic_ptree<string, string>& response)
+  void insertStructureFields(uint16_t address, string baseName, string type, object& response)
   {      
     //command comes in the form of [address {type|WORD|DWORD|QWORD|PTR}]
     auto resolvedStructure = _symbolProvider->ResolveStructure(type);
@@ -57,41 +58,51 @@ public:
       {
         auto targetName = baseName + "." + field->Name();
         auto fieldAddress = address + field->OffsetFromParent();
-        response.put<string>(targetName + ".readable", field->ReadableValue(fieldAddress));
+        response.insert({targetName + ".readable", value(field->ReadableValue(fieldAddress))});
       }
     }
   }
   
-  virtual basic_ptree<string, string> exec(basic_ptree<string, string>& commandPayload)
+  virtual value exec(object& commandPayload)
   {
-    basic_ptree<string, string> rslt;
+    object rslt;
     
-    auto address = commandPayload.get_optional<string>("address");
-    auto name = commandPayload.get_optional<string>("name");
-    auto type = commandPayload.get_optional<string>("type");
-    if(address)
+    auto addressItr = commandPayload.find("address");
+    auto nameItr = commandPayload.find("name");
+    auto typeItr = commandPayload.find("type");
+    if(addressItr == commandPayload.end())
     {
-      insertStructureFields(lexical_cast<uint16_t>(address.get()), "unnamed", type.get_value_or("PTR"), rslt);
+      insertStructureFields(lexical_cast<uint16_t>(addressItr->second.get<string>()), 
+			    "unnamed", 
+			    typeItr == commandPayload.end() ? 
+			      "PTR" :
+			      typeItr->second.get<string>(), 
+			    rslt);
     }
-    else if(name)
+    else if(nameItr == commandPayload.end())
     {
       //name can be a register
       //command comes in the form of [name {type|WORD|DWORD|QWORD|PTR}]
       //this must be a global field name or a label (if we want to view the disassembly)
-      auto foundFields = _symbolProvider->GlobalFields(name.get());
+      auto foundFields = _symbolProvider->GlobalFields(nameItr->second.get<string>());
       if(foundFields.size() == 1)
       {
         auto globalField = foundFields.front();
-        insertStructureFields(globalField->Address(), name.get(), type.get_value_or(globalField->Type()->Name()), rslt);
+        insertStructureFields(globalField->Address(), 
+			      nameItr->second.get<string>(), 
+			      typeItr == commandPayload.end() ? 
+				globalField->Type()->Name() :
+				typeItr->second.get<string>(), 
+			      rslt);
       }
       else if(foundFields.size() > 1)
       {
-        rslt.put<string>("result", "failure");
-        rslt.put<string>("reason", "ambigious symbol");
+        rslt.insert({"result", value("failure")});
+        rslt.insert({"reason", value("ambigious symbol")});
       }
       else 
       {
-        auto foundLabel = _symbolProvider->ResolveLabel(name.get());
+        auto foundLabel = _symbolProvider->ResolveLabel(nameItr->second.get<string>());
         if(foundLabel != nullptr)
         {
           //it looks like we want to disassemble the line that the label is from
@@ -101,12 +112,12 @@ public:
     }
     else
     {
-      rslt.put<string>("result", "failure");
-      rslt.put<string>("reason", "incorrect parameters");
+      rslt.insert({"result", value("failure")});
+      rslt.insert({"reason", value("incorrect parameters")});
     }
     
 
-    return rslt;
+    return value(rslt);
   }
   
 } instance;

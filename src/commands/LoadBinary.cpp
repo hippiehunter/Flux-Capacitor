@@ -1,5 +1,4 @@
 #include <boost/shared_ptr.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <string>
 #include <stdexcept>
 #include <fstream>
@@ -8,13 +7,15 @@
 #include "IVCPU.h"
 #include "IMemory.h"
 #include "ISymbolProvider.h"
+#include "picojson.h"
 
 using std::string;
 using std::runtime_error;
 using boost::shared_ptr;
-using boost::property_tree::basic_ptree;
 using std::ifstream;
 using std::ios;
+using picojson::value;
+using picojson::object;
 
 
 namespace
@@ -44,23 +45,23 @@ public:
     _symbolProvider = symbolProvider;
   }
   
-  virtual basic_ptree<string, string> exec(basic_ptree<string, string>& commandPayload)
+  virtual value exec(object& commandPayload)
   {
-    basic_ptree<string, string> rslt;
-    auto binaryFileName = commandPayload.get<std::string>("target");
+    auto binaryFileName = commandPayload["targetFile"].get<string>();
     ifstream file (binaryFileName, ios::in|ios::binary|ios::ate);
     if(file.is_open())
     {
       _memory->loadBin(file);
-      rslt.put<std::string>("result", "success");
+      return value(object {{"result", value("success")}});
     }
     else
     {
-      rslt.put<std::string>("result", "failure");
-      rslt.put<std::string>("reason", "file not found");
+      return value(object
+	{
+	  {"result", value("failure")},
+	  {"reason", value("file not found")}
+	});
     }
-
-    return rslt;
   }
   
 } instance;
